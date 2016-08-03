@@ -5,7 +5,6 @@ unit EPSimMain;
 // -----------------------------------------------
 // V1.0
 // V1.0.1 2.08.16 Normal brain slice now has activity. More drugs added
-// V1.0.2 2.08.16 Topiramate added. Icon updated. Help file updated.
 
 interface
 
@@ -481,15 +480,6 @@ begin
      Drugs[NumDrugs].FinalBathConcentration := 0.0 ;
      Drugs[NumDrugs].BathConcentration := 0.0 ;
      Drugs[NumDrugs].EC50_NaClosedState := 1E-6 ;
-     Drugs[NumDrugs].Antagonist := False ;
-     Inc(NumDrugs) ;
-
-     Drugs[NumDrugs].Name := 'Topiramate' ;
-     Drugs[NumDrugs].ShortName := 'TOP' ;
-     Drugs[NumDrugs].FinalBathConcentration := 0.0 ;
-     Drugs[NumDrugs].BathConcentration := 0.0 ;
-     Drugs[NumDrugs].EC50_NaClosedState := 1E-6 ;
-     Drugs[NumDrugs].EC50_GABAA := 1E-6 ;
      Drugs[NumDrugs].Antagonist := False ;
      Inc(NumDrugs) ;
 
