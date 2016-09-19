@@ -6,7 +6,6 @@ unit EPSimMain;
 // V1.0
 // V1.0.1 2.08.16 Normal brain slice now has activity. More drugs added
 // V1.0.2 2.08.16 Topiramate added. Icon updated. Help file updated.
-// V1.0.3 19.09.16 Salt solutions group hidden and drugs moved above stim.
 
 interface
 

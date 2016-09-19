@@ -2,8 +2,8 @@ object MainFrm: TMainFrm
   Left = 359
   Top = 16
   Caption = 
-    'Epilepsy Neuron Simulation V1.0.3 (c) J. Dempster, University of' +
-    ' Strathclyde 2016 (19/9/16) '
+    'Epilepsy Neuron Simulation V1.0.2 (c) J. Dempster, University of' +
+    ' Strathclyde 2016 (3/8/16) '
   ClientHeight = 747
   ClientWidth = 936
   Color = clBtnFace
@@ -71,7 +71,6 @@ object MainFrm: TMainFrm
       Height = 171
       Caption = ' Salt Solution  '
       TabOrder = 1
-      Visible = False
       object Label2: TLabel
         Left = 47
         Top = 24
@@ -201,7 +200,7 @@ object MainFrm: TMainFrm
     end
     object AntagonistGrp: TGroupBox
       Left = 8
-      Top = 150
+      Top = 531
       Width = 209
       Height = 137
       Caption = ' Drugs '
@@ -299,8 +298,8 @@ object MainFrm: TMainFrm
       end
     end
     object GroupBox6: TGroupBox
-      Left = 8
-      Top = 290
+      Left = 3
+      Top = 147
       Width = 209
       Height = 209
       Caption = ' Stimulator '
@@ -834,6 +833,10 @@ object MainFrm: TMainFrm
       object ExperimentPage: TTabSheet
         Caption = 'Experimental Setup'
         ImageIndex = 1
+        ExplicitLeft = 0
+        ExplicitTop = 0
+        ExplicitWidth = 0
+        ExplicitHeight = 0
         object ExptSetup: TImage
           Left = 3
           Top = 3
