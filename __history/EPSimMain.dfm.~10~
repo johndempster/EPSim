@@ -2,8 +2,8 @@ object MainFrm: TMainFrm
   Left = 359
   Top = 16
   Caption = 
-    'Epilepsy Neuron Simulation V1.0.5 (c) J. Dempster, University of' +
-    ' Strathclyde 2016-17 (03/10/17) '
+    'Epilepsy Neuron Simulation V1.0.3 (c) J. Dempster, University of' +
+    ' Strathclyde 2016 (19/9/16) '
   ClientHeight = 747
   ClientWidth = 936
   Color = clBtnFace
@@ -394,7 +394,6 @@ object MainFrm: TMainFrm
           MaxADCValue = 32768
           MinADCValue = -32768
           NumBytesPerSample = 2
-          FloatingPointSamples = False
           FixZeroLevels = False
           DisplaySelected = False
           FontSize = 8
@@ -648,10 +647,6 @@ object MainFrm: TMainFrm
       object ExperimentPage: TTabSheet
         Caption = 'Experimental Setup'
         ImageIndex = 1
-        ExplicitLeft = 0
-        ExplicitTop = 0
-        ExplicitWidth = 0
-        ExplicitHeight = 0
         object ExptSetup: TImage
           Left = 3
           Top = 3

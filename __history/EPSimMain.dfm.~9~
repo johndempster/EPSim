@@ -2,8 +2,8 @@ object MainFrm: TMainFrm
   Left = 359
   Top = 16
   Caption = 
-    'Epilepsy Neuron Simulation V1.0.1 (c) J. Dempster, University of' +
-    ' Strathclyde 2016 (2/8/16) '
+    'Epilepsy Neuron Simulation V1.0.3 (c) J. Dempster, University of' +
+    ' Strathclyde 2016 (19/9/16) '
   ClientHeight = 747
   ClientWidth = 936
   Color = clBtnFace
@@ -65,79 +65,19 @@ object MainFrm: TMainFrm
       end
     end
     object GroupBox5: TGroupBox
-      Left = 3
-      Top = 362
+      Left = 8
+      Top = 505
       Width = 209
-      Height = 171
-      Caption = ' Salt Solution  '
+      Height = 75
+      Caption = ' Bathing Solution  '
       TabOrder = 1
-      object Label2: TLabel
-        Left = 47
-        Top = 24
-        Width = 86
-        Height = 18
-        Alignment = taRightJustify
-        Caption = 'Sodium (Na)'
-        Font.Charset = ANSI_CHARSET
-        Font.Color = clWindowText
-        Font.Height = -15
-        Font.Name = 'Arial'
-        Font.Style = [fsBold]
-        ParentFont = False
-        WordWrap = True
-      end
-      object Label6: TLabel
-        Left = 35
-        Top = 53
-        Width = 98
-        Height = 18
-        Alignment = taRightJustify
-        Caption = 'Potassium (K)'
-        Font.Charset = ANSI_CHARSET
-        Font.Color = clWindowText
-        Font.Height = -15
-        Font.Name = 'Arial'
-        Font.Style = [fsBold]
-        ParentFont = False
-        WordWrap = True
-      end
-      object Label10: TLabel
-        Left = 44
-        Top = 82
-        Width = 89
-        Height = 18
-        Alignment = taRightJustify
-        Caption = 'Calcium (Ca)'
-        Font.Charset = ANSI_CHARSET
-        Font.Color = clWindowText
-        Font.Height = -15
-        Font.Name = 'Arial'
-        Font.Style = [fsBold]
-        ParentFont = False
-        WordWrap = True
-      end
-      object edNaConc: TValidatedEdit
-        Left = 136
-        Top = 24
-        Width = 65
-        Height = 24
-        Hint = 'Select volume of of stock solution to be added to tissue bath'
-        ShowHint = True
-        Text = ' 120 mM'
-        Value = 120.000000000000000000
-        Scale = 1.000000000000000000
-        Units = 'mM'
-        NumberFormat = '%.3g'
-        LoLimit = 1.000000000000000000
-        HiLimit = 200.000000000000000000
-      end
-      object bNewSaltSoln: TButton
+      object bLowCaSaltSoln: TButton
         Left = 8
-        Top = 112
+        Top = 20
         Width = 193
         Height = 20
-        Hint = 'Flush bath with new salt solution '
-        Caption = 'New Salt Solution'
+        Hint = 'Flush bath with high magnesium / low calcium salt solution '
+        Caption = 'Low Calcium Salt Solution'
         Font.Charset = ANSI_CHARSET
         Font.Color = clWindowText
         Font.Height = -13
@@ -146,27 +86,12 @@ object MainFrm: TMainFrm
         ParentFont = False
         ParentShowHint = False
         ShowHint = True
-        TabOrder = 1
-        OnClick = bNewSaltSolnClick
-      end
-      object edKConc: TValidatedEdit
-        Left = 136
-        Top = 53
-        Width = 65
-        Height = 24
-        Hint = 'Select volume of of stock solution to be added to tissue bath'
-        ShowHint = True
-        Text = ' 5 mM'
-        Value = 5.000000000000000000
-        Scale = 1.000000000000000000
-        Units = 'mM'
-        NumberFormat = '%.3g'
-        LoLimit = 0.100000001490116100
-        HiLimit = 200.000000000000000000
+        TabOrder = 0
+        OnClick = bLowCaSaltSolnClick
       end
       object bStandardSaltSoln: TButton
         Left = 8
-        Top = 136
+        Top = 44
         Width = 193
         Height = 20
         Hint = 'Flush bath with standard salt solution'
@@ -179,28 +104,13 @@ object MainFrm: TMainFrm
         ParentFont = False
         ParentShowHint = False
         ShowHint = True
-        TabOrder = 3
+        TabOrder = 1
         OnClick = bStandardSaltSolnClick
-      end
-      object edCaConc: TValidatedEdit
-        Left = 136
-        Top = 82
-        Width = 65
-        Height = 24
-        Hint = 'Select volume of of stock solution to be added to tissue bath'
-        ShowHint = True
-        Text = ' 5 mM'
-        Value = 5.000000000000000000
-        Scale = 1.000000000000000000
-        Units = 'mM'
-        NumberFormat = '%.3g'
-        LoLimit = 0.001000000047497451
-        HiLimit = 200.000000000000000000
       end
     end
     object AntagonistGrp: TGroupBox
       Left = 8
-      Top = 531
+      Top = 150
       Width = 209
       Height = 137
       Caption = ' Drugs '
@@ -298,8 +208,8 @@ object MainFrm: TMainFrm
       end
     end
     object GroupBox6: TGroupBox
-      Left = 3
-      Top = 147
+      Left = 8
+      Top = 290
       Width = 209
       Height = 209
       Caption = ' Stimulator '
@@ -543,7 +453,6 @@ object MainFrm: TMainFrm
       TabOrder = 0
       object ChartPage: TTabSheet
         Caption = 'Chart'
-        ExplicitLeft = 0
         object scDisplay: TScopeDisplay
           Left = 55
           Top = 8

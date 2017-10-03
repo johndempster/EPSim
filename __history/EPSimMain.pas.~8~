@@ -7,11 +7,9 @@ unit EPSimMain;
 // V1.0.1 2.08.16 Normal brain slice now has activity. More drugs added
 // V1.0.2 2.08.16 Topiramate added. Icon updated. Help file updated.
 // V1.0.3 19.09.16 Salt solutions group hidden and drugs moved above stim.
-// V1.0.4 04.10.16 Low calcium solution can be added to inhibit transmitter release
-// V1.0.5 03.10.16 MaxPoints increaseed to 100000000
-//                 Data loaded kept within ADC buffer in LoadFromFile()
 
 interface
+
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, StdCtrls, ScopeDisplay, ValidatedEdit, math, Menus, ExtCtrls,UITypes,
@@ -19,7 +17,7 @@ uses
   hodgkin_huxley_squid_axon_model_1952_unit, Vcl.Imaging.GIFImg ;
 
 const
-    MaxPoints = 100000000 ;
+    MaxPoints = 10000000 ;
     MaxChannels = 2 ;
     //MaxDisplayPoints = 5000 ;
     MaxDrugs = 100 ;
@@ -136,9 +134,15 @@ TCell = record
     edStimulusCurrent: TValidatedEdit;
     Label3: TLabel;
     edStimulusDuration: TValidatedEdit;
+    rbSingleStimulus: TRadioButton;
+    rbRepeatedStimulus: TRadioButton;
+    RatePanel: TPanel;
+    Label1: TLabel;
+    edStimulusInterval: TValidatedEdit;
     bStimulusOff: TButton;
     scDisplay: TScopeDisplay;
     mnPrinterSetup: TMenuItem;
+    rbPairedStimulus: TRadioButton;
     pnDisplayWindow: TPanel;
     bTDisplayHalf: TButton;
     edDisplayWindow: TValidatedEdit;
@@ -177,6 +181,8 @@ TCell = record
     procedure bNewExperimentClick(Sender: TObject);
     procedure mnSaveExperimentClick(Sender: TObject);
     procedure mnContentsClick(Sender: TObject);
+    procedure rbSingleStimulusClick(Sender: TObject);
+    procedure rbRepeatedStimulusClick(Sender: TObject);
     procedure bStimulusOffClick(Sender: TObject);
     procedure bAddDrugClick(Sender: TObject);
     procedure bStandardSaltSolnClick(Sender: TObject);
@@ -237,6 +243,7 @@ TCell = record
     procedure AddDrugMarker( ChartAnnotation : String ) ;
     procedure LoadFromFile( FileName : String ) ;
     procedure SaveToFile( FileName : String ) ;
+    function DoNerveSimulationStep : Single ;
     procedure DoAtrialMyocyteStep(
               var States : Array of Single ;
               nStates : Integer ) ;
@@ -644,7 +651,198 @@ begin
      end ;
 
 
+function TMainFrm.DoNerveSimulationStep : Single ;
+{ --------------------------------------
+  Run nerve action potential simulation
+  --------------------------------------}
+type
+    TRate = record
+          m : single ;
+          n : single ;
+          h : single ;
+          end ;
+var
+   Alpha,Beta : TRate ;
+   dm,dn,dh,dv,mInf,hInf : single ;
+   nSteps : Integer ;
+   Block : Single ;
+   i : Integer ;
+   dConc : Single ;
+   Sum : Single ;
+begin
 
+    { Initialisations at start of simulated sweep }
+    if Cell.Step = 0 then begin
+
+       Cell.t := 0. ;
+       { Simulation time step }
+       //Cell.dt := 2E-5 ;
+       Cell.Noise := 5E-10 ;
+
+       { Na channels }
+       Cell.Na.GMax := 0.12*Cell.Area ; { Max. Na conductance }
+       Cell.Na.VRev := Cell.rtf * ln( Cell.Na.Cout / Cell.Na.Cin ) ;
+
+       { K channels }
+       Cell.K.VRev := Cell.rtf * ln( Cell.K.Cout / Cell.K.Cin ) ;
+       Cell.K.GMax := 0.036*Cell.Area ; { Max. K conductance }
+
+       { Cl channels }
+       Cell.Cl.GMax := 0.005*Cell.Area ;    { Chloride conductance }
+       { Note. Internal Cl concentration passively determined by
+         potassium reversal membrane potential. }
+       Cell.Cl.Cin := Cell.Cl.Cout / exp(-Cell.K.Vrev/Cell.rtf) ;
+       Cell.Cl.VRev := -Cell.rtf * ln( Cell.Cl.Cout / Cell.Cl.Cin ) ;
+
+       { Nerve Stimulation }
+
+       { Direct current stimulation }
+       Cell.Stim.Start := cell.dt*5 ;
+       Cell.Stim.Amplitude := 0.0 ;
+       Cell.Stim.Duration := 1E-4 ;
+
+       end ;
+
+    dConc := (Cell.Na.FinalCout - Cell.Na.Cout)*MixingRate*Cell.dt ;
+    Cell.Na.Cout := Cell.Na.Cout + dConc ;
+    Cell.Na.VRev := Cell.rtf * ln( Cell.Na.Cout / Cell.Na.Cin ) ;
+
+    dConc := (Cell.K.FinalCout - Cell.K.Cout)*MixingRate*Cell.dt ;
+    Cell.K.Cout := Cell.K.Cout + dConc ;
+    Cell.K.VRev := Cell.rtf * ln( Cell.K.Cout / Cell.K.Cin ) ;
+
+    dConc := (Cell.Ca.FinalCout - Cell.Ca.Cout)*MixingRate*Cell.dt ;
+    Cell.Ca.Cout := Cell.Ca.Cout + dConc ;
+    Cell.Ca.VRev := Cell.rtf * ln( Cell.Ca.Cout / Cell.Ca.Cin ) ;
+
+    Cell.Cl.Cin := Cell.Cl.Cout / exp(-Cell.K.Vrev/Cell.rtf) + 1.0 ;
+    Cell.Cl.VRev := -Cell.rtf * ln( Cell.Cl.Cout / Cell.Cl.Cin ) ;
+
+    // Update drug bath concentrations
+    for i := 0 to NumDrugs-1 do begin
+         dConc := (Drugs[i].FinalBathConcentration - Drugs[i].BathConcentration)
+                  *MixingRate*Cell.dt ;
+         Drugs[i].BathConcentration := Drugs[i].BathConcentration + dConc ;
+         end ;
+
+    nSteps := Cell.NumStepsPerDisplayPoint ;
+    while nSteps > 0 do begin
+
+           { Na current }
+
+           { Activation parameter (m) }
+            if( abs( -Cell.Vm - 0.050 ) > 1E-4 ) then begin
+                Alpha.m := 1E5*( -Cell.Vm-0.050)/( exp((-Cell.Vm-0.050)/0.01) -1.0) ;
+                end
+            else begin
+                Alpha.m := 5.0*( 1.0/( exp((1E-4)/0.01) -1.0)
+                                 + 1.0/( exp((-1E-4)/0.01) -1.0) ) ;
+                end ;
+
+            Beta.m := 4E3*exp( -(Cell.Vm + 0.06)/0.018 ) ;
+            if Cell.Step = 0 then Cell.Na.m := Alpha.m / ( Alpha.m + Beta.m ) ;
+            dm := ( Alpha.m*(1.0 - Cell.Na.m) - Beta.m*Cell.Na.m )*Cell.dt ;
+            Cell.Na.m := Cell.Na.m + dm ;
+
+            { Inactivation parameter (h) }
+            Alpha.h := 70.0*exp( -(Cell.Vm + 0.06)/0.02) ;
+            Beta.h := 1E3/( exp((-Cell.Vm - 0.03)/0.01) + 1.0) ;
+            if Cell.Step = 0 then Cell.Na.h := Alpha.h / ( Alpha.h + Beta.h ) ;
+
+            dh := ( Alpha.h*(1.0 - Cell.Na.h) - Beta.h*Cell.Na.h )*Cell.dt ;
+            Cell.Na.h := Cell.Na.h + dh ;
+
+            { TTX dissociation constant 5nM (from Hille, Ionic Channels ..) }
+
+            // Fractional Na channel block
+            Sum := 0.0 ;
+            for i := 0 to NumDrugs-1 do begin
+                Sum := Sum + (Drugs[i].BathConcentration/Drugs[i].EC50_GNa) ;
+                end ;
+
+//            outputdebugString(PChar(format('%.4g',[sum]))) ;
+            Block := 1.0 / (1.0 + Sum ) ;
+            Cell.Na.G := Cell.Na.m*Cell.Na.m*Cell.Na.m*Cell.Na.h*Cell.Na.GMax*Block ;
+            Cell.Na.I := Cell.Na.g*( Cell.Vm - Cell.Na.VRev ) ;
+
+            { Potassium current }
+
+            { Activation parameter (n) }
+            if abs(-Cell.Vm - 0.05) > 1E-4  then begin
+                Alpha.n := 1E4*(-Cell.Vm - 0.05)/( exp((-Cell.Vm - 0.05)/0.01) -1.0) ;
+                end
+            else begin
+                Alpha.n := 0.5*( 1.0/( exp(1E-2) -1.0) -1.0/( exp(-1E-2) -1.0) );
+                end ;
+            Beta.n := 125.0*exp( (-Cell.Vm - 0.06)/0.08 ) ;
+            if Cell.Step = 0 then Cell.K.n := Alpha.n / ( Alpha.n + Beta.n ) ;
+
+            dn := ( Alpha.n*(1.0 - Cell.K.n) - Beta.n*Cell.K.n )*Cell.dt ;
+            Cell.K.n := Cell.K.n + dn ;
+
+            // Fractional K channel block
+            Sum := 0.0 ;
+            for i := 0 to NumDrugs-1 do begin
+                Sum := Sum + (Drugs[i].BathConcentration/Drugs[i].EC50_GK) ;
+                end ;
+            Block := 1.0 / (1.0 + Sum ) ;
+
+            Cell.K.G := Cell.K.n*Cell.K.n*Cell.K.n*Cell.K.n*Cell.K.gMax*Block ;
+            Cell.K.I := Cell.K.g * (Cell.Vm - Cell.K.VRev ) ;
+
+            { Leak current (chloride) }
+
+            Cell.Cl.I := Cell.Cl.GMAX * (Cell.Vm - Cell.Cl.VRev ) ;
+
+            { Direct muscle stimulation }
+            if not bStimulusOn.Enabled then begin
+               if Cell.t >= Cell.Stim.Start then begin
+                  Cell.Stim.I := Cell.Stim.Amplitude ;
+                  end ;
+               if Cell.t >= (Cell.Stim.Start + Cell.Stim.Duration) then begin
+                  Cell.Stim.I := 0. ;
+                  if rbSingleStimulus.Checked then begin
+                     // Single stim.
+                     bStimulusOn.Enabled := True ;
+                     bStimulusOff.Enabled := False ;
+                     end
+                  else begin
+                     // Paired and repeated stim.
+                     Inc(Cell.Stim.NumStimDone) ;
+                     if rbPairedStimulus.Checked and (Cell.Stim.NumStimDone >= 2) then begin
+                        bStimulusOn.Enabled := True ;
+                        bStimulusOff.Enabled := False ;
+                        end
+                     else begin
+                        Cell.Stim.Start := Cell.Stim.Start + edStimulusInterval.Value ;
+                        outputdebugstring(pchar(format('stim start %.4g',[Cell.Stim.Start])));
+                        Cell.Stim.I := Cell.Stim.Amplitude ;
+                        end;
+                     end ;
+                  end ;
+               end
+            else begin
+               Cell.Stim.I := 0. ;
+               end ;
+
+            { Compute membrane current }
+            Cell.Im := Cell.Na.I + Cell.K.I + Cell.Cl.I - Cell.Stim.I
+                       + (random - 0.5)*Cell.Noise ;
+
+            { Compute change in membrane potential }
+
+            dv := ( -Cell.Im ) * Cell.dt/Cell.C ;
+            Cell.Vm := Cell.Vm + dv ;
+
+            Inc(Cell.Step) ;
+            Cell.t := Cell.t + Cell.dt ;
+            Dec(nSteps) ;
+
+            end ;
+
+     Result := Cell.Vm ;
+
+     end ;
 
 procedure TMainFrm.UpdateIonConcentrations ;
 // ---------------------------------
@@ -772,9 +970,23 @@ begin
              end ;
           if Cell.t >= (Cell.Stim.Start + Cell.Stim.Duration) then begin
              Cell.Stim.I := 0. ;
+             if rbSingleStimulus.Checked then begin
                 // Single stim.
-             bStimulusOn.Enabled := True ;
-             bStimulusOff.Enabled := False ;
+                bStimulusOn.Enabled := True ;
+                bStimulusOff.Enabled := False ;
+                end
+             else begin
+                // Paired and repeated stim.
+                Inc(Cell.Stim.NumStimDone) ;
+                if rbPairedStimulus.Checked and (Cell.Stim.NumStimDone >= 2) then begin
+                   bStimulusOn.Enabled := True ;
+                   bStimulusOff.Enabled := False ;
+                   end
+                else begin
+                   Cell.Stim.Start := Cell.Stim.Start + edStimulusInterval.Value ;
+                   outputdebugstring(pchar(format('stim start %.4g',[Cell.Stim.Start])));
+                   end;
+                end ;
              end
           end
        else begin
@@ -1109,8 +1321,6 @@ begin
         NewExperiment ;
 
         ReadInt( Header, 'NPOINTS=', NumPointsInBuf ) ;
-        // Keep within ADC buffer size
-        NumPointsInBuf := Min( NumPointsInBuf, MaxPoints div scDisplay.NumChannels ) ;
 
         ReadInt( Header, 'NMARKERS=', NumMarkers ) ;
         MarkerList.Clear ;
@@ -1298,6 +1508,16 @@ begin
      end;
 
 
+procedure TMainFrm.rbSingleStimulusClick(Sender: TObject);
+begin
+     RatePanel.Visible := False ;
+     end;
+
+
+procedure TMainFrm.rbRepeatedStimulusClick(Sender: TObject);
+begin
+     RatePanel.Visible := True ;
+     end;
 
 
 procedure TMainFrm.bStimulusOffClick(Sender: TObject);

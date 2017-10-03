@@ -8,8 +8,6 @@ unit EPSimMain;
 // V1.0.2 2.08.16 Topiramate added. Icon updated. Help file updated.
 // V1.0.3 19.09.16 Salt solutions group hidden and drugs moved above stim.
 // V1.0.4 04.10.16 Low calcium solution can be added to inhibit transmitter release
-// V1.0.5 03.10.16 MaxPoints increaseed to 100000000
-//                 Data loaded kept within ADC buffer in LoadFromFile()
 
 interface
 uses
@@ -19,7 +17,7 @@ uses
   hodgkin_huxley_squid_axon_model_1952_unit, Vcl.Imaging.GIFImg ;
 
 const
-    MaxPoints = 100000000 ;
+    MaxPoints = 10000000 ;
     MaxChannels = 2 ;
     //MaxDisplayPoints = 5000 ;
     MaxDrugs = 100 ;
@@ -1109,8 +1107,6 @@ begin
         NewExperiment ;
 
         ReadInt( Header, 'NPOINTS=', NumPointsInBuf ) ;
-        // Keep within ADC buffer size
-        NumPointsInBuf := Min( NumPointsInBuf, MaxPoints div scDisplay.NumChannels ) ;
 
         ReadInt( Header, 'NMARKERS=', NumMarkers ) ;
         MarkerList.Clear ;
