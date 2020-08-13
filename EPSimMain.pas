@@ -10,6 +10,10 @@ unit EPSimMain;
 // V1.0.4 04.10.16 Low calcium solution can be added to inhibit transmitter release
 // V1.0.5 03.10.16 MaxPoints increaseed to 100000000
 //                 Data loaded kept within ADC buffer in LoadFromFile()
+// V1.0.6 13.07.20 New, more realistic model for generating  epileptiform activity
+//                 Effective concentrations of drugs now based on data from experimental studies
+//                 Drugs concentrations now selected from list
+
 
 interface
 uses
@@ -37,6 +41,7 @@ type
           EC50_GNa : Single ;
           EC50_GK : Single ;
           EC50_GCaL : Single ;
+          EC50_GCaHVA : Single ;
           EC50_BetaADR : Single ;
           EC50_NaClosedState : Single ;
           EC50_GABAA : Single ;
@@ -87,6 +92,13 @@ TCell = record
       Stim : TStimulus ;
       Vm : Single ;
       Im : Single ;
+      GABA_Gmax : Single ;
+      GABA_Vrev : Single ;
+      GABA_I : Single ;
+      Glut_Gmax : Single ;
+      Glut_Vrev : Single ;
+      Glut_I : Single ;
+
       t : double ;
       dt : double ;
       Step : Integer ;
@@ -100,7 +112,6 @@ TCell = record
     bLowCaSaltSoln: TButton;
     AntagonistGrp: TGroupBox;
     cbDrug: TComboBox;
-    edDrugConc: TValidatedEdit;
     bAddDrug: TButton;
     Label4: TLabel;
     bNewExperiment: TButton;
@@ -130,7 +141,7 @@ TCell = record
     mnHelp: TMenuItem;
     mnContents: TMenuItem;
     bStandardSaltSoln: TButton;
-    Button2: TButton;
+    bRemoveAllDrugs: TButton;
     GroupBox1: TGroupBox;
     Label5: TLabel;
     edStimulusCurrent: TValidatedEdit;
@@ -158,8 +169,9 @@ TCell = record
     Label8: TLabel;
     Label9: TLabel;
     ConditionGrp: TGroupBox;
-    RadioButton1: TRadioButton;
+    rbNormal: TRadioButton;
     rbEpilepsy: TRadioButton;
+    cbConcentration: TComboBox;
     procedure FormShow(Sender: TObject);
     procedure TimerTimer(Sender: TObject);
     procedure bRecordClick(Sender: TObject);
@@ -180,7 +192,7 @@ TCell = record
     procedure bStimulusOffClick(Sender: TObject);
     procedure bAddDrugClick(Sender: TObject);
     procedure bStandardSaltSolnClick(Sender: TObject);
-    procedure Button2Click(Sender: TObject);
+    procedure bRemoveAllDrugsClick(Sender: TObject);
     procedure mnPrinterSetupClick(Sender: TObject);
     procedure edDisplayWindowKeyPress(Sender: TObject; var Key: Char);
     procedure FormCreate(Sender: TObject);
@@ -209,7 +221,8 @@ TCell = record
     NumDrugs : Integer ;                     // No. of drugs available
     GNa_Available : Single ;                // Fraction Na conductance unblocked
     GK_Available : Single ;                 // Fraction K Channels unblocked
-    GCaL_Available : Single ;                 // Fraction K Channels unblocked
+    GCaL_Available : Single ;                 // Fraction Ca Channels unblocked
+    GCaHVA_Available : Single ;             // Fraction high voltage activated Ca Channels available
     BetaADR_Active : single ;               // Fraction of beta adrenoceptors active
     NaClosedStateR : single ;         // Prolong Na channel closed state
     GABAAR : single ;                  // GABA A receptor activation (inhibitory)
@@ -220,26 +233,17 @@ TCell = record
 
     UnsavedData : Boolean ;  // Un-saved data flag
 
-    VOI : Double ;
-    CONSTANTS : array[0..1000] of Double ;
-    RATES : array[0..1000] of Double ;
-    STATES : array[0..1000] of Double ;
-    ALGEBRAIC : array[0..1000] of Double ;
-
-
     procedure NewExperiment ;
     procedure UpdateDisplay(
-              var States : Array of Single ;
-              nStates : Integer ) ;
+              var States : Array of Single  ) ;
     procedure UpdateIonConcentrations ;
     procedure UpdateDrugConcentrations ;
     procedure AddChartAnnotations ;
     procedure AddDrugMarker( ChartAnnotation : String ) ;
     procedure LoadFromFile( FileName : String ) ;
     procedure SaveToFile( FileName : String ) ;
-    procedure DoAtrialMyocyteStep(
-              var States : Array of Single ;
-              nStates : Integer ) ;
+    procedure DoNeuronStep(
+              var States : Array of Single  ) ;
     procedure UpdateDisplayWindow ;
     procedure SnapDisplayWindow ;
   public
@@ -272,7 +276,6 @@ procedure TMainFrm.FormShow(Sender: TObject);
 // ------------------------------------------------
 var
     FileName : String ;
-   LocalHelpFile : string ;
    HelpFileName,LocalHelpFilePath : string ;
    TempPath : Array[0..511] of WideChar ;
    ch : Integer ;
@@ -357,7 +360,8 @@ begin
 
      { Create a set of zero level cursors }
      scDisplay.ClearHorizontalCursors ;
-     for ch  := 0 to scDisplay.NumChannels-1 do begin
+     for ch  := 0 to scDisplay.NumChannels-1 do
+        begin
         scDisplay.AddHorizontalCursor( ch, clRed, True, '' ) ;
         scDisplay.HorizontalCursors[ch] := 0 ;
         end;
@@ -403,10 +407,12 @@ begin
      // --------------------
 
      // Initialise all EC50's to inneffective
-     for I := 0 to High(Drugs) do begin
+     for I := 0 to High(Drugs) do
+         begin
          Drugs[i].EC50_GNa := 1E3 ;
          Drugs[i].EC50_GK := 1E3 ;
          Drugs[i].EC50_GCaL := 1E3 ;
+         Drugs[i].EC50_GCaHVA := 1E3 ;
          Drugs[i].EC50_BetaADR := 1E3 ;
          Drugs[i].EC50_NaClosedState := 1E3 ;
          Drugs[i].EC50_GABAA := 1E3 ;
@@ -419,7 +425,7 @@ begin
      Drugs[NumDrugs].ShortName := 'PHY' ;
      Drugs[NumDrugs].FinalBathConcentration := 0.0 ;
      Drugs[NumDrugs].BathConcentration := 0.0 ;
-     Drugs[NumDrugs].EC50_NaClosedState := 1E-6 ;
+     Drugs[NumDrugs].EC50_NaClosedState := 5E-5 ;
      Drugs[NumDrugs].Antagonist := False ;
      Inc(NumDrugs) ;
 
@@ -427,8 +433,9 @@ begin
      Drugs[NumDrugs].ShortName := 'VAL' ;
      Drugs[NumDrugs].FinalBathConcentration := 0.0 ;
      Drugs[NumDrugs].BathConcentration := 0.0 ;
-     Drugs[NumDrugs].EC50_GABAA := 1E-6 ;
-     Drugs[NumDrugs].EC50_NaClosedState := 1E-6 ;
+     Drugs[NumDrugs].EC50_GABAA := 2E-3 ;
+     Drugs[NumDrugs].EC50_NaClosedState := 1.7E-4 ;
+     Drugs[NumDrugs].EC50_GCaHVA := 3E-3 ;
      Drugs[NumDrugs].Antagonist := False ;
      Inc(NumDrugs) ;
 
@@ -436,7 +443,7 @@ begin
      Drugs[NumDrugs].ShortName := 'LAM' ;
      Drugs[NumDrugs].FinalBathConcentration := 0.0 ;
      Drugs[NumDrugs].BathConcentration := 0.0 ;
-     Drugs[NumDrugs].EC50_NaClosedState := 1E-6 ;
+     Drugs[NumDrugs].EC50_NaClosedState := 5E-5 ;
      Drugs[NumDrugs].Antagonist := False ;
      Inc(NumDrugs) ;
 
@@ -449,15 +456,15 @@ begin
      Inc(NumDrugs) ;    }
 
      Drugs[NumDrugs].Name := 'Gabapentin' ;
-     Drugs[NumDrugs].ShortName := 'BNZ' ;
+     Drugs[NumDrugs].ShortName := 'GPN' ;
      Drugs[NumDrugs].FinalBathConcentration := 0.0 ;
      Drugs[NumDrugs].BathConcentration := 0.0 ;
-     Drugs[NumDrugs].EC50_GABAA := 1E-6 ;
+     Drugs[NumDrugs].EC50_GCaHVA := 4E-5 ;
      Drugs[NumDrugs].Antagonist := False ;
      Inc(NumDrugs) ;
 
      Drugs[NumDrugs].Name := 'Midazolam' ;
-     Drugs[NumDrugs].ShortName := 'BNZ' ;
+     Drugs[NumDrugs].ShortName := 'MDZ' ;
      Drugs[NumDrugs].FinalBathConcentration := 0.0 ;
      Drugs[NumDrugs].BathConcentration := 0.0 ;
      Drugs[NumDrugs].EC50_GABAA := 1E-6 ;
@@ -465,10 +472,10 @@ begin
      Inc(NumDrugs) ;
 
      Drugs[NumDrugs].Name := 'Carbamazepine' ;
-     Drugs[NumDrugs].ShortName := 'BNZ' ;
+     Drugs[NumDrugs].ShortName := 'CBM' ;
      Drugs[NumDrugs].FinalBathConcentration := 0.0 ;
      Drugs[NumDrugs].BathConcentration := 0.0 ;
-     Drugs[NumDrugs].EC50_NaClosedState := 1E-6 ;
+     Drugs[NumDrugs].EC50_NaClosedState := 5E-5 ;
      Drugs[NumDrugs].Antagonist := False ;
      Inc(NumDrugs) ;
 
@@ -476,8 +483,9 @@ begin
      Drugs[NumDrugs].ShortName := 'TOP' ;
      Drugs[NumDrugs].FinalBathConcentration := 0.0 ;
      Drugs[NumDrugs].BathConcentration := 0.0 ;
-     Drugs[NumDrugs].EC50_NaClosedState := 1E-6 ;
-     Drugs[NumDrugs].EC50_GABAA := 1E-6 ;
+     Drugs[NumDrugs].EC50_NaClosedState := 1.5E-5 ;
+     Drugs[NumDrugs].EC50_GCaHVA := 3E-4 ;
+     Drugs[NumDrugs].EC50_GABAA := 2.5E-4 ;
      Drugs[NumDrugs].Antagonist := False ;
      Inc(NumDrugs) ;
 
@@ -487,6 +495,19 @@ begin
      for i := 0 to NumDrugs-1 do
          cbDrug.Items.AddObject( Drugs[i].Name, TObject(i)) ;
      cbDrug.ItemIndex := iKeep ;
+
+     // Concentration list
+     cbConcentration.Clear ;
+     cbConcentration.Items.Add('1E-6 M') ;
+     cbConcentration.Items.Add('5E-6 M') ;
+     cbConcentration.Items.Add('1E-5 M') ;
+     cbConcentration.Items.Add('5E-5 M') ;
+     cbConcentration.Items.Add('1E-4 M') ;
+     cbConcentration.Items.Add('5E-4 M') ;
+     cbConcentration.Items.Add('1E-3 M') ;
+     cbConcentration.Items.Add('5E-3 M') ;
+     cbConcentration.Items.Add('1E-2 M') ;
+     cbConcentration.ItemIndex := 0 ;
 
      Cell.dt := 2E-5 ;
 
@@ -551,6 +572,8 @@ begin
      bRecord.Enabled := True ;
      bStop.Enabled := False ;
 
+     rbNormal.Checked := True ; // Return to normal mode
+
      sbDisplay.Enabled := False ;
      sbDisplay.Position := 0 ;
 
@@ -585,7 +608,7 @@ procedure TMainFrm.TimerTimer(Sender: TObject);
 // Timed event scheduler
 // ---------------------
 var
-    i,nStates : Integer ;
+    i : Integer ;
     States : Array[0..20] of Single ;
 begin
 
@@ -594,20 +617,23 @@ begin
      TimerEventRunning := True ;
 
      if not bRecord.Enabled then begin
-        for i := 0 to 150 do begin
+        for i := 0 to 150 do
+          begin
           UpdateIonConcentrations ;
           UpdateDrugConcentrations ;
-          DoAtrialMyocyteStep(States,nStates) ;
-          UpdateDisplay(States,nStates) ;
+          DoNeuronStep(States) ;
+          UpdateDisplay(States) ;
           end;
 
        scDisplay.DisplayNewPoints( NumPointsDisplayed ) ;
        scDisplay.Invalidate ;
 
         end
-     else begin
+     else
+        begin
         // Display
-        if scDisplay.XOffset <> sbDisplay.Position then begin
+        if scDisplay.XOffset <> sbDisplay.Position then
+           begin
            scDisplay.XOffset := sbDisplay.Position ;
            edStartAt.Scale := scDisplay.TScale ;
            edStartAt.Value := scDisplay.XOffset ;
@@ -635,9 +661,11 @@ var
 begin
 
      scDisplay.ClearMarkers ;
-     for i := 0 to MarkerList.Count-1 do begin
+     for i := 0 to MarkerList.Count-1 do
+         begin
          MarkerPosition := Integer(MarkerList.Objects[i]) - scDisplay.XOffset ;
-         if (MarkerPosition > 0) and (MarkerPosition < scDisplay.MaxPoints) then begin
+         if (MarkerPosition > 0) and (MarkerPosition < scDisplay.MaxPoints) then
+            begin
             scDisplay.AddMarker( MarkerPosition, MarkerList.Strings[i] ) ;
             end ;
          end ;
@@ -681,7 +709,8 @@ var
 begin
 
     // Update drug bath concentrations
-    for i := 0 to NumDrugs-1 do begin
+    for i := 0 to NumDrugs-1 do
+         begin
          dConc := (Drugs[i].FinalBathConcentration - Drugs[i].BathConcentration)
                   *MixingRate*Cell.dt ;
          Drugs[i].BathConcentration := Drugs[i].BathConcentration + dConc ;
@@ -689,34 +718,48 @@ begin
 
     // Fraction of Na channels unblocked
     Sum := 0.0 ;
-    for i := 0 to NumDrugs-1 do begin
+    for i := 0 to NumDrugs-1 do
+        begin
         Sum := Sum + (Drugs[i].BathConcentration/Drugs[i].EC50_GNa) ;
         end ;
     GNa_Available := 1.0 / (1.0 + Sum ) ;
 
     // Fraction of K channels unblocked
     Sum := 0.0 ;
-    for i := 0 to NumDrugs-1 do begin
+    for i := 0 to NumDrugs-1 do
+        begin
         Sum := Sum + (Drugs[i].BathConcentration/Drugs[i].EC50_GK) ;
         end ;
     GK_Available := 1.0 / (1.0 + Sum ) ;
 
     // Fraction of CaL channels unblocked
     Sum := 0.0 ;
-    for i := 0 to NumDrugs-1 do begin
+    for i := 0 to NumDrugs-1 do
+        begin
         Sum := Sum + (Drugs[i].BathConcentration/Drugs[i].EC50_GCaL) ;
         end ;
     GCaL_Available := 1.0 / (1.0 + Sum ) ;
 
+    // Fraction of CaHVA channels available
+    // Note. Availability can only be reduced by 50%
+    Sum := 0.0 ;
+    for i := 0 to NumDrugs-1 do
+        begin
+        Sum := Sum + (Drugs[i].BathConcentration/Drugs[i].EC50_GCaHVA) ;
+        end ;
+    GCaHVA_Available := (1.0 / (1.0 + Sum )) ;
+
     // Beta-adrenoceptor activation
     Sum := 0.0 ;
-    for i := 0 to NumDrugs-1 do begin
+    for i := 0 to NumDrugs-1 do
+        begin
         Sum := Sum + Drugs[i].BathConcentration/Drugs[i].EC50_BetaADR ;
         end ;
     Occupancy := Sum / ( 1. + Sum ) ;
 
     Efficacy := 0.0 ;
-    for i := 0 to NumDrugs-1 do if not Drugs[i].Antagonist then begin
+    for i := 0 to NumDrugs-1 do if not Drugs[i].Antagonist then
+        begin
         Efficacy := Efficacy + Drugs[i].BathConcentration/Drugs[i].EC50_BetaADR ;
         end ;
     Efficacy := Efficacy / ( Sum + 0.001 ) ;
@@ -724,74 +767,110 @@ begin
 
     // Fraction of Na channel closed states prolonged
     Sum := 0.0 ;
-    for i := 0 to NumDrugs-1 do begin
+    for i := 0 to NumDrugs-1 do
+        begin
         Sum := Sum + (Drugs[i].BathConcentration/Drugs[i].EC50_NaClosedState) ;
         end ;
     NaClosedStateR := Sum / ( 1. + Sum ) ;
 
     // Fraction of GABA A receptors activated
     Sum := 0.0 ;
-    for i := 0 to NumDrugs-1 do begin
+    for i := 0 to NumDrugs-1 do
+        begin
         Sum := Sum + (Drugs[i].BathConcentration/Drugs[i].EC50_GABAA) ;
         end ;
     GABAAR := Sum / ( 1. + Sum ) ;
 
     // Fraction of glutamate receptors activated
     Sum := 0.0 ;
-    for i := 0 to NumDrugs-1 do begin
+    for i := 0 to NumDrugs-1 do
+        begin
         Sum := Sum + (Drugs[i].BathConcentration/Drugs[i].EC50_Glut) ;
         end ;
  //   GlutR := Sum / ( 1. + Sum ) ;
 
     end ;
 
-procedure TMainFrm.DoAtrialMyocyteStep(
-              var States : Array of Single ;
-              nStates : Integer ) ;
+
+procedure TMainFrm.DoNeuronStep(
+              var States : Array of Single  ) ;
+// ------------------------------
+// Calculate next simulation step
+// ------------------------------
 var
-     i,nSteps : Integer ;
-     VPrevious,IScale : single ;
-     MicroA_per_microF_To_pA,A_to_microA_per_microF,CellCapacity_microF : double ;
-     EpilepticTransmitterRelease,ExcitatoryTransmitterRelease : double ;
+     i : Integer ;
+     ExcitatoryTransmitterRelease : double ;
+     GlutR_Tau : single ;
 begin
 
 //    nSteps := Cell.NumStepsPerDisplayPoint ;
 //    while nSteps > 0 do begin
-      for i := 1 to Cell.NumStepsPerDisplayPoint do begin
-       if Cell.Step = 0 then begin
+      for i := 1 to Cell.NumStepsPerDisplayPoint do
+       begin
+       if Cell.Step = 0 then
+          begin
           Cell.Stim.Start := 0.0 ;
           Cell.Stim.Amplitude := 0.0 ;
           Cell.Stim.Duration := 1E-4 ;
-          VPrevious := States[0] ;
           end ;
 
        { Direct neuron stimulation }
-       if (not bStimulusOn.Enabled) and bStimulusOff.Enabled then begin
-          if Cell.t >= Cell.Stim.Start then begin
+       if (not bStimulusOn.Enabled) and bStimulusOff.Enabled then
+          begin
+          if Cell.t >= Cell.Stim.Start then
+             begin
              Cell.Stim.I := Cell.Stim.Amplitude ;
              end ;
-          if Cell.t >= (Cell.Stim.Start + Cell.Stim.Duration) then begin
+          if Cell.t >= (Cell.Stim.Start + Cell.Stim.Duration) then
+             begin
              Cell.Stim.I := 0. ;
                 // Single stim.
              bStimulusOn.Enabled := True ;
              bStimulusOff.Enabled := False ;
              end
           end
-       else begin
+       else
+          begin
           Cell.Stim.I := 0. ;
           end ;
 
-       ExcitatoryTransmitterRelease := (Cell.Ca.FinalCout/(Cell.Ca.FinalCout + 0.01)) ;
-       EpilepticTransmitterRelease := ExcitatoryTransmitterRelease*0.01 ;
-       if Random < 0.00005 then GlutR := GlutR + ExcitatoryTransmitterRelease;
-       GlutR := Max(GlutR - (GlutR*Cell.dt)/GlutR_Tau,0.0); ;
+       // Normal excitatory transmitter release from randomly occurring EPSPs in the absence of epileptic fit
+       ExcitatoryTransmitterRelease := ((Cell.Ca.FinalCout/(Cell.Ca.FinalCout + 0.01))){*GCaHVA_Available} ;
+       if Random < 0.00005 then GlutR := GlutR + ExcitatoryTransmitterRelease*0.8 ;
+
+       // Transmitter release kinetics
+       // Epileptic state is simulated by prolonging transmitter release
+       // Activation of GABA A receptors and stabilisation of Na channel closed state by AEDs inhibit prolongation
+       GlutR_Tau := 1E-3 ;
+       if rbEpilepsy.Checked then
+          begin
+          GlutR_Tau :=  GlutR_Tau + 3E-2*GCaHVA_Available*(1.0-NaClosedStateR)*(1.0-GABAAR) ;
+          end ;
+       GlutR := Max(GlutR - (GlutR*Cell.dt)/GlutR_Tau,0.0) ;
+
+       // Glutamate release due to epileptic activity
+       // Suppressed by
+       {
        if rbEpilepsy.Checked then
           GlutR_Epilepsy := (1.0 - 0.01)*GlutR_Epilepsy
-                            + 0.01*(2.3+1.5*random)*ExcitatoryTransmitterRelease
-          else
+                            + 0.01*(2.3+1.5*random)*ExcitatoryTransmitterRelease*(1.0-GABAAR)
+          else  }
        GlutR_Epilepsy := (1.0 - 0.01)*GlutR_Epilepsy ;
 
-       hodgkin_huxley_squid_axon_model_1952.i_stim := (Cell.Stim.I*1E12) - 15*GABAAR + 15*GlutR + GlutR_Epilepsy ;
+       Cell.Vm := hodgkin_huxley_squid_axon_model_1952.Y[0] ;
+
+       // GABA channel current (excitatory)
+       Cell.GABA_Gmax := 1.0 ;
+       Cell.GABA_Vrev := -90.0 ;
+       Cell.GABA_I := Cell.GABA_GMax * ( Cell.Vm - Cell.GABA_Vrev ) * GABAAR ;
+
+       // Glutamate channel current (inhibitory)
+       Cell.Glut_Gmax := 0.7 ;
+       Cell.Glut_Vrev := 0.0 ;
+       Cell.Glut_I := Cell.Glut_GMax * ( Cell.Vm - Cell.Glut_Vrev ) * GlutR ;
+
+       // Add currents to model
+       hodgkin_huxley_squid_axon_model_1952.i_stim := (Cell.Stim.I*1E12) - Cell.GABA_I + -Cell.Glut_I ;
 
  //      xx      hodgkin_huxley_squid_axon_model_1952.Y[16] := Cell.Na.Cout ;
  //            hodgkin_huxley_squid_axon_model_1952.Y[14] := Cell.K.Cout ;
@@ -802,12 +881,11 @@ begin
        hodgkin_huxley_squid_axon_model_1952.NaClosedStateR := NaClosedStateR ;
 
   //     for i := 1 to Cell.NumStepsPerDisplayPoint do begin
-           VPrevious := hodgkin_huxley_squid_axon_model_1952.Y[0] ;
            Inc(Cell.Step) ;
            Cell.t := Cell.t + Cell.dt ;
            hodgkin_huxley_squid_axon_model_1952.Compute(0.0) ;
            hodgkin_huxley_squid_axon_model_1952.UpdateStates(Cell.dt) ;
-           end;
+       end;
        States[0] := hodgkin_huxley_squid_axon_model_1952.Y[0] ;
 //       States[1] := ((States[0]-VPrevious)*1E-3)/Cell.dt ;
        States[2] := hodgkin_huxley_squid_axon_model_1952.I_Na ;
@@ -818,8 +896,7 @@ begin
 
 
 procedure TMainFrm.UpdateDisplay(
-              var States : Array of Single ;
-              nStates : Integer ) ;
+              var States : Array of Single  ) ;
 // -------------------
 // Update chart display
 // -------------------
@@ -827,7 +904,8 @@ var
     StartPoints,ch,i : Integer ;
 begin
 
-    if NumPointsDisplayed >= scDisplay.MaxPoints then begin
+    if NumPointsDisplayed >= scDisplay.MaxPoints then
+       begin
        StartPoints := scDisplay.MaxPoints div 10 ;
        scDisplay.XOffset := scDisplay.XOffset + scDisplay.MaxPoints -  StartPoints ;
        sbDisplay.Max := sbDisplay.Max + scDisplay.MaxPoints ;
@@ -840,7 +918,8 @@ begin
        end ;
 
     i := NumPointsInBuf*scDisplay.NumChannels ;
-    for ch := 0 to scDisplay.NumChannels-1 do begin
+    for ch := 0 to scDisplay.NumChannels-1 do
+        begin
         ADC[i] := Round(States[ch]/scDisplay.ChanScale[ch]) ;
         Inc(i) ;
         end;
@@ -1049,7 +1128,8 @@ begin
      AppendInt( Header, 'NPOINTS=', NumPointsInBuf ) ;
 
      AppendInt( Header, 'NMARKERS=', MarkerList.Count ) ;
-     for i := 0 to MarkerList.Count-1 do begin
+     for i := 0 to MarkerList.Count-1 do
+         begin
          AppendInt( Header, format('MKPOINT%d=',[i]), Integer(MarkerList.Objects[i])) ;
          AppendString( Header, format('MKTEXT%d=',[i]), MarkerList.Strings[i] ) ;
          end ;
@@ -1114,7 +1194,8 @@ begin
 
         ReadInt( Header, 'NMARKERS=', NumMarkers ) ;
         MarkerList.Clear ;
-        for i := 0 to NumMarkers-1 do begin
+        for i := 0 to NumMarkers-1 do
+            begin
             ReadInt( Header, format('MKPOINT%d=',[i]), MarkerPoint) ;
             ReadString( Header, format('MKTEXT%d=',[i]), MarkerText ) ;
             MarkerList.AddObject( MarkerText, TObject(MarkerPoint)) ;
@@ -1312,9 +1393,10 @@ var
     iDrug : Integer ;
     ChartAnnotation : String ;
 begin
+
      iDrug :=  Integer(cbDrug.Items.Objects[cbDrug.ItemIndex]) ;
      Drugs[iDrug].FinalBathConcentration := Drugs[iDrug].FinalBathConcentration
-                                            + edDrugConc.Value ;
+                                            + ExtractFloat( cbConcentration.Text, 0.0 ) ;
 
      // Add chart annotation
      ChartAnnotation := format('%s= %.3g M',
@@ -1334,7 +1416,7 @@ begin
      end;
 
 
-procedure TMainFrm.Button2Click(Sender: TObject);
+procedure TMainFrm.bRemoveAllDrugsClick(Sender: TObject);
 // --------------------------
 // Remove all drugs from bath
 // --------------------------
@@ -1343,17 +1425,12 @@ var
     ChartAnnotation : String ;
 begin
      ChartAnnotation := '' ;
-     for i := 0 to NumDrugs do begin
-         if Drugs[i].FinalBathConcentration > 0.0 then begin
-            if ChartAnnotation <> '' then ChartAnnotation := ChartAnnotation + ', ' ;
-            ChartAnnotation := ChartAnnotation + Drugs[i].ShortName + '=0' ;
-            end ;
+     for i := 0 to NumDrugs do
+         begin
          Drugs[i].FinalBathConcentration := 0.0 ;
          end ;
-     if ChartAnnotation <> '' then begin
-        ChartAnnotation := ChartAnnotation + ' M' ;
-        AddDrugMarker( ChartAnnotation ) ;
-        end ;
+     ChartAnnotation := 'Wash' ;
+     AddDrugMarker( ChartAnnotation ) ;
 
      end;
 
@@ -1367,7 +1444,8 @@ begin
 
 procedure TMainFrm.edDisplayWindowKeyPress(Sender: TObject; var Key: Char);
 begin
-    if Key = #13 then begin
+    if Key = #13 then
+       begin
        UpdateDisplayWindow ;
        end;
      end;
@@ -1399,7 +1477,8 @@ var
     MidPoint : Integer ;
 begin
 
-    if not bRecord.Enabled then begin
+    if not bRecord.Enabled then
+       begin
        NumPointsDisplayed := 0 ;
        scDisplay.XOffset := Max(NumPointsInBuf - 1,0);
        sbDisplay.Position := scDisplay.XOffset ;
@@ -1408,7 +1487,8 @@ begin
        scDisplay.xMax := scDisplay.MaxPoints-1 ;
        scDisplay.SetDataBuf( @ADC[sbDisplay.Position*scDisplay.NumChannels] ) ;
        end
-     else begin
+     else
+       begin
        MidPoint := scDisplay.XOffset + (scDisplay.MaxPoints div 2) ;
        scDisplay.MaxPoints := Round(edDisplayWindow.Value/(Cell.dt*Cell.NumStepsPerDisplayPoint));
        scDisplay.xMin := 0 ;
@@ -1446,11 +1526,13 @@ begin
 
     scDisplay.ClearLines ;
 
-    for ch := 0 to scDisplay.NumChannels-1 do begin
+    for ch := 0 to scDisplay.NumChannels-1 do
+        begin
         iLine := scDisplay.CreateLine( ch, clRed, psSolid, 1 ) ;
         j := sbDisplay.Position*scDisplay.NumChannels + ch ;
         x := 0.0 ;
-        for i := 0 to scDisplay.NumPoints-1 do begin
+        for i := 0 to scDisplay.NumPoints-1 do
+          begin
           y := ADC[j] ;
           scDisplay.AddPointToLine( iLine, x,y) ;
           j := j + scDisplay.NumChannels ;

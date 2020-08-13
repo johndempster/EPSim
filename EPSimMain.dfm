@@ -2,10 +2,10 @@ object MainFrm: TMainFrm
   Left = 359
   Top = 16
   Caption = 
-    'Epilepsy Neuron Simulation V1.0.5 (c) J. Dempster, University of' +
-    ' Strathclyde 2016-17 (03/10/17) '
-  ClientHeight = 747
-  ClientWidth = 936
+    'Epilepsy Neuron Simulation V1.0.6 (c) J. Dempster, University of' +
+    ' Strathclyde 2016-20 (13/8/20) '
+  ClientHeight = 659
+  ClientWidth = 916
   Color = clBtnFace
   Font.Charset = ANSI_CHARSET
   Font.Color = clWindowText
@@ -24,9 +24,9 @@ object MainFrm: TMainFrm
   TextHeight = 16
   object ControlsGrp: TGroupBox
     Left = 8
-    Top = 0
+    Top = 2
     Width = 233
-    Height = 697
+    Height = 649
     TabOrder = 0
     object TissueGrp: TGroupBox
       Left = 8
@@ -66,7 +66,7 @@ object MainFrm: TMainFrm
     end
     object GroupBox5: TGroupBox
       Left = 8
-      Top = 505
+      Top = 439
       Width = 209
       Height = 75
       Caption = ' Bathing Solution  '
@@ -112,12 +112,12 @@ object MainFrm: TMainFrm
       Left = 8
       Top = 150
       Width = 209
-      Height = 137
+      Height = 153
       Caption = ' Drugs '
       TabOrder = 2
       object Label4: TLabel
-        Left = 36
-        Top = 48
+        Left = 9
+        Top = 50
         Width = 80
         Height = 16
         Alignment = taRightJustify
@@ -155,21 +155,6 @@ object MainFrm: TMainFrm
           'Mepyramine'
           '')
       end
-      object edDrugConc: TValidatedEdit
-        Left = 120
-        Top = 48
-        Width = 81
-        Height = 24
-        Hint = 'Select concentration of drug to be added to bath'
-        ShowHint = True
-        Text = ' 1.0E-006 M'
-        Value = 0.000000999999997475
-        Scale = 1.000000000000000000
-        Units = 'M'
-        NumberFormat = '%.2e'
-        LoLimit = 0.000000000100000001
-        HiLimit = 0.100000001490116100
-      end
       object bAddDrug: TButton
         Left = 8
         Top = 80
@@ -185,12 +170,12 @@ object MainFrm: TMainFrm
         ParentFont = False
         ParentShowHint = False
         ShowHint = True
-        TabOrder = 2
+        TabOrder = 1
         OnClick = bAddDrugClick
       end
-      object Button2: TButton
+      object bRemoveAllDrugs: TButton
         Left = 8
-        Top = 104
+        Top = 106
         Width = 193
         Height = 20
         Hint = 'Flush bath with clean salt solution, removing all drugs'
@@ -203,15 +188,23 @@ object MainFrm: TMainFrm
         ParentFont = False
         ParentShowHint = False
         ShowHint = True
+        TabOrder = 2
+        OnClick = bRemoveAllDrugsClick
+      end
+      object cbConcentration: TComboBox
+        Left = 95
+        Top = 50
+        Width = 107
+        Height = 24
         TabOrder = 3
-        OnClick = Button2Click
+        Text = 'cbConcentration'
       end
     end
     object GroupBox6: TGroupBox
       Left = 8
-      Top = 290
+      Top = 309
       Width = 209
-      Height = 209
+      Height = 124
       Caption = ' Stimulator '
       TabOrder = 3
       object bStimulusOn: TButton
@@ -310,7 +303,7 @@ object MainFrm: TMainFrm
       Height = 60
       Caption = ' Condition '
       TabOrder = 4
-      object RadioButton1: TRadioButton
+      object rbNormal: TRadioButton
         Left = 8
         Top = 16
         Width = 76
@@ -343,9 +336,9 @@ object MainFrm: TMainFrm
     end
   end
   object DisplayGrp: TGroupBox
-    Left = 248
-    Top = 0
-    Width = 601
+    Left = 247
+    Top = 8
+    Width = 661
     Height = 575
     TabOrder = 1
     object DisplayPage: TPageControl
@@ -648,10 +641,6 @@ object MainFrm: TMainFrm
       object ExperimentPage: TTabSheet
         Caption = 'Experimental Setup'
         ImageIndex = 1
-        ExplicitLeft = 0
-        ExplicitTop = 0
-        ExplicitWidth = 0
-        ExplicitHeight = 0
         object ExptSetup: TImage
           Left = 3
           Top = 3

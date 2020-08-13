@@ -10,7 +10,7 @@ interface
 
 uses
   SysUtils, WinTypes, WinProcs, Messages, Classes, Graphics, Controls,
-  Forms, Dialogs, StdCtrls, ExtCtrls, Spin, printers {nidaq};
+  Forms, Dialogs, StdCtrls, ExtCtrls, Spin, printers, system.uitypes {nidaq};
 
 const
      MaxSingle = 1E38 ;
