@@ -212,10 +212,10 @@ else
   Comment: Install/Re-Install product
   Create Shortcut $SHORTCUTFOLDER$\Uninstall #TITLE# to $UNINSTALLLINK$
   [OFFLINE CONTENT]
-  Install Files E:\Delphi XE3 Projects\APSim\APSIM.hsm to $TARGETDIR$
-  Install Files E:\Delphi XE3 Projects\APSim\APSim.exe to $TARGETDIR$
-  Create Shortcut $SHORTCUTFOLDER$\APSim to $TARGETDIR$\APSim.exe
-  Create Shortcut $DESKTOPDIR$\APSim to $TARGETDIR$\APSim.exe
+  Create Shortcut $SHORTCUTFOLDER$\EPSim to $TARGETDIR$\EPSim.exe
+  Create Shortcut $DESKTOPDIR$\EPSim to $TARGETDIR$\EPSim.exe
+  Install Files C:\Users\John\Documents\Embarcadero\Studio\Projects\EPSim\EPSIM.chm to $TARGETDIR$
+  Install Files C:\Users\John\Documents\Embarcadero\Studio\Projects\EPSim\EPSim.exe to $TARGETDIR$
   [DEFINE WEB MEDIA NerveSim]
   Get Component NerveSim Selection State into Variable SELECTED
   if Variable SELECTED Equals TRUE

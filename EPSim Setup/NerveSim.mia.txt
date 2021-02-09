@@ -1,6 +1,11 @@
 Comment: NerveSim Setup Project
  
 [DEFINE REGION: Check Application Requirements]
+Get System Setting Administrator Rights into CHECKSYSTEM
+if Variable CHECKSYSTEM not Equals TRUE
+  MessageBox: $TITLE$ Setup Error, This product requires at least Administrator Privileges.$NEWLINE$$NEWLINE$Setup cannot continue.
+  Terminate Installation
+end
 [END REGION]
  
 [DEFINE REGION: Check/Install Application Pre-Requisites]
@@ -107,7 +112,7 @@ else
   end
 end
 label: User Registration
-Display Dialog: registration, wait for dialog to return (modal)
+Comment: Display Dialog: registration, wait for dialog to return (modal)
 if Variable WIZARD Equals BACK
   GoTo Label: ReadMe Information
 else
@@ -216,6 +221,7 @@ else
   Create Shortcut $DESKTOPDIR$\EPSim to $TARGETDIR$\EPSim.exe
   Install Files C:\Users\John\Documents\Embarcadero\Studio\Projects\EPSim\EPSIM.chm to $TARGETDIR$
   Install Files C:\Users\John\Documents\Embarcadero\Studio\Projects\EPSim\EPSim.exe to $TARGETDIR$
+  Install Files C:\Users\John\Documents\Embarcadero\Studio\Projects\EPSim\EPSIM User Guide.pdf to $TARGETDIR$
   [DEFINE WEB MEDIA NerveSim]
   Get Component NerveSim Selection State into Variable SELECTED
   if Variable SELECTED Equals TRUE
@@ -249,6 +255,7 @@ if Variable SILENT Equals FALSE
   if Variable RUNAPP Equals TRUE
     if Variable REMOVE Equals FALSE
       if Variable SUCCESS Equals COMPLETE
+        Run Program $TARGETDIR$\EPSim.exe 
         Comment: TO-DO: Insert command that starts your application here
       end
     end
