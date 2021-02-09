@@ -13,6 +13,7 @@ unit EPSimMain;
 // V1.0.6 13.07.20 New, more realistic model for generating  epileptiform activity
 //                 Effective concentrations of drugs now based on data from experimental studies
 //                 Drugs concentrations now selected from list
+// V1.0.7 09/02.21 Epiletic Fit condition option name changed to Epipetic Seizure
 
 
 interface

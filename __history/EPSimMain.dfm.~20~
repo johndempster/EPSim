@@ -2,10 +2,10 @@ object MainFrm: TMainFrm
   Left = 359
   Top = 16
   Caption = 
-    'Epilepsy Neuron Simulation V1.0.1 (c) J. Dempster, University of' +
-    ' Strathclyde 2016 (2/8/16) '
-  ClientHeight = 747
-  ClientWidth = 936
+    'Epilepsy Neuron Simulation V1.0.6 (c) J. Dempster, University of' +
+    ' Strathclyde 2016-20 (13/8/20) '
+  ClientHeight = 659
+  ClientWidth = 916
   Color = clBtnFace
   Font.Charset = ANSI_CHARSET
   Font.Color = clWindowText
@@ -24,9 +24,9 @@ object MainFrm: TMainFrm
   TextHeight = 16
   object ControlsGrp: TGroupBox
     Left = 8
-    Top = 0
+    Top = 2
     Width = 233
-    Height = 697
+    Height = 649
     TabOrder = 0
     object TissueGrp: TGroupBox
       Left = 8
@@ -65,79 +65,19 @@ object MainFrm: TMainFrm
       end
     end
     object GroupBox5: TGroupBox
-      Left = 3
-      Top = 362
+      Left = 8
+      Top = 439
       Width = 209
-      Height = 171
-      Caption = ' Salt Solution  '
+      Height = 75
+      Caption = ' Bathing Solution  '
       TabOrder = 1
-      object Label2: TLabel
-        Left = 47
-        Top = 24
-        Width = 86
-        Height = 18
-        Alignment = taRightJustify
-        Caption = 'Sodium (Na)'
-        Font.Charset = ANSI_CHARSET
-        Font.Color = clWindowText
-        Font.Height = -15
-        Font.Name = 'Arial'
-        Font.Style = [fsBold]
-        ParentFont = False
-        WordWrap = True
-      end
-      object Label6: TLabel
-        Left = 35
-        Top = 53
-        Width = 98
-        Height = 18
-        Alignment = taRightJustify
-        Caption = 'Potassium (K)'
-        Font.Charset = ANSI_CHARSET
-        Font.Color = clWindowText
-        Font.Height = -15
-        Font.Name = 'Arial'
-        Font.Style = [fsBold]
-        ParentFont = False
-        WordWrap = True
-      end
-      object Label10: TLabel
-        Left = 44
-        Top = 82
-        Width = 89
-        Height = 18
-        Alignment = taRightJustify
-        Caption = 'Calcium (Ca)'
-        Font.Charset = ANSI_CHARSET
-        Font.Color = clWindowText
-        Font.Height = -15
-        Font.Name = 'Arial'
-        Font.Style = [fsBold]
-        ParentFont = False
-        WordWrap = True
-      end
-      object edNaConc: TValidatedEdit
-        Left = 136
-        Top = 24
-        Width = 65
-        Height = 24
-        Hint = 'Select volume of of stock solution to be added to tissue bath'
-        ShowHint = True
-        Text = ' 120 mM'
-        Value = 120.000000000000000000
-        Scale = 1.000000000000000000
-        Units = 'mM'
-        NumberFormat = '%.3g'
-        LoLimit = 1.000000000000000000
-        HiLimit = 200.000000000000000000
-      end
-      object bNewSaltSoln: TButton
+      object bLowCaSaltSoln: TButton
         Left = 8
-        Top = 112
+        Top = 20
         Width = 193
         Height = 20
-        Hint = 'Flush bath with new salt solution '
-        Caption = 'New Salt Solution'
+        Hint = 'Flush bath with high magnesium / low calcium salt solution '
+        Caption = 'Low Calcium Salt Solution'
         Font.Charset = ANSI_CHARSET
         Font.Color = clWindowText
         Font.Height = -13
@@ -146,27 +86,12 @@ object MainFrm: TMainFrm
         ParentFont = False
         ParentShowHint = False
         ShowHint = True
-        TabOrder = 1
-        OnClick = bNewSaltSolnClick
-      end
-      object edKConc: TValidatedEdit
-        Left = 136
-        Top = 53
-        Width = 65
-        Height = 24
-        Hint = 'Select volume of of stock solution to be added to tissue bath'
-        ShowHint = True
-        Text = ' 5 mM'
-        Value = 5.000000000000000000
-        Scale = 1.000000000000000000
-        Units = 'mM'
-        NumberFormat = '%.3g'
-        LoLimit = 0.100000001490116100
-        HiLimit = 200.000000000000000000
+        TabOrder = 0
+        OnClick = bLowCaSaltSolnClick
       end
       object bStandardSaltSoln: TButton
         Left = 8
-        Top = 136
+        Top = 44
         Width = 193
         Height = 20
         Hint = 'Flush bath with standard salt solution'
@@ -179,35 +104,20 @@ object MainFrm: TMainFrm
         ParentFont = False
         ParentShowHint = False
         ShowHint = True
-        TabOrder = 3
+        TabOrder = 1
         OnClick = bStandardSaltSolnClick
-      end
-      object edCaConc: TValidatedEdit
-        Left = 136
-        Top = 82
-        Width = 65
-        Height = 24
-        Hint = 'Select volume of of stock solution to be added to tissue bath'
-        ShowHint = True
-        Text = ' 5 mM'
-        Value = 5.000000000000000000
-        Scale = 1.000000000000000000
-        Units = 'mM'
-        NumberFormat = '%.3g'
-        LoLimit = 0.001000000047497451
-        HiLimit = 200.000000000000000000
       end
     end
     object AntagonistGrp: TGroupBox
       Left = 8
-      Top = 531
+      Top = 150
       Width = 209
-      Height = 137
+      Height = 153
       Caption = ' Drugs '
       TabOrder = 2
       object Label4: TLabel
-        Left = 36
-        Top = 48
+        Left = 9
+        Top = 50
         Width = 80
         Height = 16
         Alignment = taRightJustify
@@ -245,21 +155,6 @@ object MainFrm: TMainFrm
           'Mepyramine'
           '')
       end
-      object edDrugConc: TValidatedEdit
-        Left = 120
-        Top = 48
-        Width = 81
-        Height = 24
-        Hint = 'Select concentration of drug to be added to bath'
-        ShowHint = True
-        Text = ' 1.0E-006 M'
-        Value = 0.000000999999997475
-        Scale = 1.000000000000000000
-        Units = 'M'
-        NumberFormat = '%.2e'
-        LoLimit = 0.000000000100000001
-        HiLimit = 0.100000001490116100
-      end
       object bAddDrug: TButton
         Left = 8
         Top = 80
@@ -275,12 +170,12 @@ object MainFrm: TMainFrm
         ParentFont = False
         ParentShowHint = False
         ShowHint = True
-        TabOrder = 2
+        TabOrder = 1
         OnClick = bAddDrugClick
       end
-      object Button2: TButton
+      object bRemoveAllDrugs: TButton
         Left = 8
-        Top = 104
+        Top = 106
         Width = 193
         Height = 20
         Hint = 'Flush bath with clean salt solution, removing all drugs'
@@ -293,15 +188,23 @@ object MainFrm: TMainFrm
         ParentFont = False
         ParentShowHint = False
         ShowHint = True
+        TabOrder = 2
+        OnClick = bRemoveAllDrugsClick
+      end
+      object cbConcentration: TComboBox
+        Left = 95
+        Top = 50
+        Width = 107
+        Height = 24
         TabOrder = 3
-        OnClick = Button2Click
+        Text = 'cbConcentration'
       end
     end
     object GroupBox6: TGroupBox
-      Left = 3
-      Top = 147
+      Left = 8
+      Top = 309
       Width = 209
-      Height = 209
+      Height = 124
       Caption = ' Stimulator '
       TabOrder = 3
       object bStimulusOn: TButton
@@ -351,8 +254,8 @@ object MainFrm: TMainFrm
           Hint = 'Stimulus current'
           OnKeyPress = edStimulusCurrentKeyPress
           ShowHint = True
-          Text = ' 0.5 nA'
-          Value = 0.000000000499999986
+          Text = ' 0.005 nA'
+          Value = 0.000000000005000000
           Scale = 1000000000.000000000000000000
           Units = 'nA'
           NumberFormat = '%.4g'
@@ -367,109 +270,13 @@ object MainFrm: TMainFrm
           Hint = 'Stimulus duration'
           OnKeyPress = edStimulusDurationKeyPress
           ShowHint = True
-          Text = ' 0.250 ms'
-          Value = 0.000250000011874363
+          Text = ' 1000.000 s'
+          Value = 1.000000000000000000
           Scale = 1000.000000000000000000
-          Units = 'ms'
+          Units = 's'
           NumberFormat = '%.3f'
           LoLimit = 0.000019999999494758
           HiLimit = 100.000000000000000000
-        end
-      end
-      object TGroupBox
-        Left = 8
-        Top = 112
-        Width = 193
-        Height = 81
-        Caption = ' Pulse(s) '
-        TabOrder = 2
-        object rbSingleStimulus: TRadioButton
-          Left = 8
-          Top = 18
-          Width = 65
-          Height = 17
-          Hint = 'Single stimulus'
-          Caption = 'Single'
-          Checked = True
-          Font.Charset = ANSI_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -13
-          Font.Name = 'Arial'
-          Font.Style = [fsBold]
-          ParentFont = False
-          ParentShowHint = False
-          ShowHint = True
-          TabOrder = 0
-          TabStop = True
-          OnClick = rbSingleStimulusClick
-        end
-        object rbRepeatedStimulus: TRadioButton
-          Left = 8
-          Top = 54
-          Width = 89
-          Height = 17
-          Hint = 'Repeated stimuli'
-          Caption = 'Repeated'
-          Font.Charset = ANSI_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -13
-          Font.Name = 'Arial'
-          Font.Style = [fsBold]
-          ParentFont = False
-          ParentShowHint = False
-          ShowHint = True
-          TabOrder = 1
-          OnClick = rbRepeatedStimulusClick
-        end
-        object RatePanel: TPanel
-          Left = 98
-          Top = 18
-          Width = 87
-          Height = 45
-          BevelOuter = bvNone
-          Caption = 'RatePanel'
-          TabOrder = 2
-          Visible = False
-          object Label1: TLabel
-            Left = 5
-            Top = 0
-            Width = 40
-            Height = 16
-            Caption = 'Interval'
-          end
-          object edStimulusInterval: TValidatedEdit
-            Left = 5
-            Top = 16
-            Width = 81
-            Height = 24
-            Hint = 'Stimulus repeat rate'
-            ShowHint = True
-            Text = ' 1 s'
-            Value = 1.000000000000000000
-            Scale = 1.000000000000000000
-            Units = 's'
-            NumberFormat = '%.4g'
-            LoLimit = -1.000000015047466E30
-            HiLimit = 1000.000000000000000000
-          end
-        end
-        object rbPairedStimulus: TRadioButton
-          Left = 8
-          Top = 36
-          Width = 89
-          Height = 17
-          Hint = 'Pair of stimulus pulses'
-          Caption = 'Pair'
-          Font.Charset = ANSI_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -13
-          Font.Name = 'Arial'
-          Font.Style = [fsBold]
-          ParentFont = False
-          ParentShowHint = False
-          ShowHint = True
-          TabOrder = 3
-          OnClick = rbRepeatedStimulusClick
         end
       end
       object bStimulusOff: TButton
@@ -485,7 +292,7 @@ object MainFrm: TMainFrm
         Font.Name = 'Arial'
         Font.Style = [fsBold]
         ParentFont = False
-        TabOrder = 3
+        TabOrder = 2
         OnClick = bStimulusOffClick
       end
     end
@@ -496,7 +303,7 @@ object MainFrm: TMainFrm
       Height = 60
       Caption = ' Condition '
       TabOrder = 4
-      object RadioButton1: TRadioButton
+      object rbNormal: TRadioButton
         Left = 8
         Top = 16
         Width = 76
@@ -529,9 +336,9 @@ object MainFrm: TMainFrm
     end
   end
   object DisplayGrp: TGroupBox
-    Left = 248
-    Top = 0
-    Width = 601
+    Left = 247
+    Top = 8
+    Width = 661
     Height = 575
     TabOrder = 1
     object DisplayPage: TPageControl
@@ -580,6 +387,7 @@ object MainFrm: TMainFrm
           MaxADCValue = 32768
           MinADCValue = -32768
           NumBytesPerSample = 2
+          FloatingPointSamples = False
           FixZeroLevels = False
           DisplaySelected = False
           FontSize = 8

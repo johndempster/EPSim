@@ -2,8 +2,8 @@ object MainFrm: TMainFrm
   Left = 359
   Top = 16
   Caption = 
-    'Epilepsy Neuron Simulation V1.0.6 (c) J. Dempster, University of' +
-    ' Strathclyde 2016-20 (13/8/20) '
+    'Epilepsy Neuron Simulation V1.0.7 (c) J. Dempster, University of' +
+    ' Strathclyde 2016-21 (09/02/21) '
   ClientHeight = 659
   ClientWidth = 916
   Color = clBtnFace
@@ -322,9 +322,9 @@ object MainFrm: TMainFrm
       object rbEpilepsy: TRadioButton
         Left = 8
         Top = 36
-        Width = 105
+        Width = 137
         Height = 17
-        Caption = 'Epileptic Fit'
+        Caption = 'Epileptic Seizure'
         Font.Charset = ANSI_CHARSET
         Font.Color = clWindowText
         Font.Height = -13
